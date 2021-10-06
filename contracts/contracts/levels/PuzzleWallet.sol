@@ -86,6 +86,8 @@ contract PuzzleWallet {
         require(success, "Execution failed");
         return result;
     }
+    
+    receive() external payable {}
 }
 
 interface ICEth {
