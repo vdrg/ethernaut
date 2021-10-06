@@ -56,7 +56,7 @@ contract Base is ERC20{
     }
     
     // TODO: any other process/function that calls this one, could make use of the error-validation problem in minting/redeeming, exploit that
-    function executeCompoundAction(uint256 _action, uint256 _amount) external returns (bool) {
+    function executeCompoundAction(uint256 _action, uint256 _amount) external {
         bytes memory data;
         
         if(_action == 0) {// transfer - output should be true and also it's not being checked for the balance of the user, instead it's the staked ctoken value
@@ -71,11 +71,18 @@ contract Base is ERC20{
         }
         (bool success, bytes memory returnedData) = cTokenAsset.call(data);
 
-        // bool result = abi.decode(returnedData, (bool));
-        // require(success && result, "Transaction failed!");
+        bool result = abi.decode(returnedData, (bool));
+        require(success && result, "Transaction failed!");
 
-        require(success, "Transaction failed!");
+        // require(success, "Transaction failed!");
     }
+
+    // function executeCompoundActionGeneric(bytes memory _data) external returns (bool) {
+    //     (bool success, bytes memory returnedData) = cTokenAsset.call(_data);
+    //     // bool result = abi.decode(returnedData, (bool));
+    //     // require(success && result, "Transaction failed!");
+    //     require(success, "Transaction failed!");
+    // }
 }
 
 // primary access point for users that wrap some of the actions above in a secure way
@@ -130,5 +137,5 @@ contract CTokenMock is ERC20 {
 }
 
 contract UltraUnderlying is ERC20 {
-    constructor () ERC20("UltraUnderlying", "UU") {}
+    constructor () public ERC20("UltraUnderlying", "UU") {}
 }
