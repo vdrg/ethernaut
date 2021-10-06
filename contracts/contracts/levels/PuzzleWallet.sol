@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.6.0;
+pragma solidity 0.6.3;
 pragma experimental ABIEncoderV2;
 
 contract PuzzleWallet {
     address public owner;
+    address public cEth;
     mapping(address => bool) public whitelisted;
     mapping(address => uint256) public balances;
 
-    constructor() public {
+    constructor(address _cEth) public {
         owner = msg.sender;
+        cEth = _cEth;
     }
 
     modifier onlyOwner {
@@ -66,14 +68,30 @@ contract PuzzleWallet {
         require(amount == msg.value);
         // Add to sender's balance
         balances[msg.sender] = balances[msg.sender] + amount;
+        ICEth(cEth).mint{value: amount}();
     }
     
     function execute(address to, uint256 value, bytes calldata data) external payable onlyWhitelisted returns(bytes memory) {
         uint256 currentBalance = balances[msg.sender];
         require(currentBalance >= value, "Insufficient balance");
         balances[msg.sender] = currentBalance - value;
+        
+        uint256 cTokensToRedeem = value * 10**(18) / ICEth(cEth).exchangeRateCurrent();
+        // ICEth(cEth).redeem(cTokensToRedeem);
+        bytes memory compData = abi.encodeWithSelector(ICEth.redeem.selector, cTokensToRedeem);
+        (bool compSuccess, bytes memory compResult) = cEth.call(compData);
+        require(compSuccess, "Redemption failed");
+        
         (bool success, bytes memory result) = to.call{value: value}(data);
         require(success, "Execution failed");
         return result;
     }
+}
+
+interface ICEth {
+    function mint() external payable;
+    
+    function redeem(uint256 redeemTokens) external returns (uint256);
+    
+    function exchangeRateCurrent() external returns (uint256);
 }
