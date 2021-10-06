@@ -1,27 +1,21 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.6.0;
+pragma solidity 0.6.3;
 pragma experimental ABIEncoderV2;
 
-contract PuzzleWallet {
-    address public owner;
+import "https://github.com/dapphub/ds-auth/blob/master/src/auth.sol";
+
+contract PuzzleWallet is DSAuth {
     mapping(address => bool) public whitelisted;
     mapping(address => uint256) public balances;
 
-    constructor() public {
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner {
-        require(msg.sender == owner, "Not the owner");
-        _;
-    }
+    constructor() public DSAuth() {}
 
     modifier onlyWhitelisted {
         require(whitelisted[msg.sender], "Not whitelisted");
         _;
     }
 
-    function addToWhitelist(address addr) external onlyOwner {
+    function addToWhitelist(address addr) external auth {
         whitelisted[addr] = true;
     }
     
